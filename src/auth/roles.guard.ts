@@ -27,7 +27,17 @@ export class RolesGuard implements CanActivate {
       return false;
     }
 
-    const userRoles = Array.isArray(user.role) ? user.role : [user.role];
-    return requiredRoles.some((role) => userRoles.includes(role));
+    // 🌟 ROBUST EXTRACTOR: Normalizes single values, arrays, strings, or database relation objects
+    const rawRoles = Array.isArray(user.role) ? user.role : [user.role || user.roles];
+    
+    const userRoles = rawRoles
+      .filter(Boolean)
+      .map((r) => (typeof r === 'object' ? r.name || r.role || r.slug : r))
+      .map((r) => String(r).trim().toLowerCase());
+
+    const normalizedRequired = requiredRoles.map((r) => String(r).trim().toLowerCase());
+
+    // Check if any role matches
+    return normalizedRequired.some((role) => userRoles.includes(role));
   }
 }
