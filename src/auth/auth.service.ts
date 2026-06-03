@@ -27,7 +27,7 @@ export class AuthService {
     const depositAmount = Number(amount);
     
     const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
+      where: { id: cleanUserId },
       data: { 
         ['wallet' as any]: currentBalance + depositAmount 
       } as any,
@@ -63,7 +63,7 @@ export class AuthService {
         username,
         fullname,
         password: hashedPassword,
-        role: 'goons',
+        role: 'goons', // Default role on signup
       },
     });
 
@@ -86,7 +86,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { userId: user.id, email: user.email };
+    // 🌟 THE FIX: Explicitly map the database role string directly into the JWT token payload
+    const payload = { 
+      userId: user.id, 
+      email: user.email,
+      role: (user as any).role || 'goons' 
+    };
     
     const secretKey = this.configService.get<string>('JWT_SECRET') || 'SUPER_SECRET_LOCAL_FALLBACK_123';
     const token = this.jwtService.sign(payload, { secret: secretKey });
@@ -96,6 +101,4 @@ export class AuthService {
       token,
     };
   }
-
-  
 }
