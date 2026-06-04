@@ -41,11 +41,18 @@ export class AuthService {
   }
 
   async register(body: any) {
-    const { email, password, username, fullname } = body;
+    const { email, password, username, fullname, role } = body;
 
     if (!email || !password || !username || !fullname) {
       throw new BadRequestException('bro check yo shi');
     }
+
+    // 🌟 VALIDATE ROLE SELECTION: Whitelist valid garage roles explicitly
+    const validRoles = ['customer', 'mods'];
+    
+    // If the frontend sends a role selection value, ensure it matches our allowed schema. 
+    // Otherwise, default safely to 'customer'.
+    const selectedRole = validRoles.includes(role) ? role : 'customer';
 
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -64,14 +71,14 @@ export class AuthService {
         username,
         fullname,
         password: hashedPassword,
-        role: 'customer', // Default role on signup
+        role: selectedRole, // 🌟 Assigns the validated dropdown role selection
       },
     });
 
     return {
       message: 'Registration successful',
       userId: newUser.id,
-      role: (newUser as any).role || 'customer'
+      role: (newUser as any).role || selectedRole
     };
   }
 
