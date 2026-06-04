@@ -9,9 +9,12 @@ export class JwtAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers['authorization'] || request.headers.authorization;
 
+    // 🛠️ DEV BACKDOOR OVERRIDE: Gracefully falls back to customer role locally if no token is sent
     if (!authHeader && process.env.NODE_ENV !== 'production') {
       request.user = { 
-        role: 'angelic goodest dogboyprincess' 
+        userId: 1,
+        email: 'localdev@garage.com',
+        role: 'customer' // 🌟 Swapped completely out of the old admin name strings
       };
       return true;
     }

@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { Roles } from './roles.decorator';
 
 @Injectable()
 export class AuthService {
@@ -63,13 +64,14 @@ export class AuthService {
         username,
         fullname,
         password: hashedPassword,
-        role: 'goons', // Default role on signup
+        role: 'customer', // Default role on signup
       },
     });
 
     return {
       message: 'Registration successful',
       userId: newUser.id,
+      role: (newUser as any).role || 'customer'
     };
   }
 
@@ -86,19 +88,20 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // 🌟 THE FIX: Explicitly map the database role string directly into the JWT token payload
     const payload = { 
       userId: user.id, 
       email: user.email,
-      role: (user as any).role || 'goons' 
+      role: (user as any).role || 'customer' 
     };
     
     const secretKey = this.configService.get<string>('JWT_SECRET') || 'SUPER_SECRET_LOCAL_FALLBACK_123';
     const token = this.jwtService.sign(payload, { secret: secretKey });
 
+    // 🌟 THE FIX FOR FE/FS: Explicitly exposing the role property in the JSON body response
     return {
       message: 'Login successful',
       token,
+      role: payload.role // 👈 This gives them the exact string to hide/show UI buttons
     };
   }
 }

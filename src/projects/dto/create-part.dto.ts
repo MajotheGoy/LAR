@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString, IsPositive } from 'class-validator';
 
 export class CreatePartDto {
-  @ApiProperty({ example: 'Garrett G25 Turbocharger', description: 'Name of the modification part' })
+  @ApiProperty({ example: 'Turbo', description: 'nama modif' })
   @IsNotEmpty()
   @IsString()
   name: string;
