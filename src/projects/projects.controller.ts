@@ -3,7 +3,7 @@ import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { ApiTags, ApiBearerAuth, ApiQuery, ApiBody, ApiProperty } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiQuery, ApiBody, ApiProperty, ApiOperation } from '@nestjs/swagger';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTimelineDto } from './dto/create-timeline.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -21,7 +21,7 @@ export class ProjectsController {
   constructor(
     private projectsService: ProjectsService,
     private prisma: PrismaService,
-  ) {}
+  ) { }
 
   @Post('market/listings')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -30,7 +30,7 @@ export class ProjectsController {
   @ApiBody({ type: CreateListingDto })
   async createListing(@Body() body: any) { // 💡 Typing as 'any' or pulling directly from @Body() fixes schema mismatches
     // Destructure explicitly here to check what Swagger is sending
-    const payload = body?.body ? body.body : body; 
+    const payload = body?.body ? body.body : body;
     return this.projectsService.createPartListing(payload);
   }
 
@@ -75,6 +75,12 @@ export class ProjectsController {
     return this.projectsService.deleteProject(id, req.user.userId);
   }
 
+  @Get(':id/timeline')
+  @ApiOperation({ summary: 'Get chronological modification timeline data for a project' })
+  async getProjectTimeline(@Param('id') id: string) {
+    return this.projectsService.getProjectTimeline(Number(id));
+  }
+
   @Post(':id/timeline')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
@@ -95,7 +101,7 @@ export class ProjectsController {
   async deleteTimeline(@Req() req: any, @Param('logId', ParseIntPipe) logId: number) {
     return this.projectsService.deleteTimelineLog(req.user.userId, logId);
   }
-  
+
   @Get('dashboard/metrics')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()

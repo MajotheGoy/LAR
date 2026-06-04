@@ -5,6 +5,38 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ProjectsService {
   constructor(private prisma: PrismaService) {}
 
+  // ⏱️ NEW ENDPOINT: Fetches a single project build with its chronological modification log history
+  async getProjectTimeline(projectId: number) {
+    const cleanId = Number(projectId);
+
+    const projectWithTimeline = await this.prisma.project.findUnique({
+      where: { id: cleanId },
+      include: {
+        modLogs: {
+          orderBy: {
+            createdAt: 'asc', // Keeps the vehicle build path in historical order (oldest to newest)
+          },
+        } as any,
+        tags: { include: { tag: true } } as any,
+      },
+    });
+
+    if (!projectWithTimeline) {
+      throw new NotFoundException('Project build profile not found');
+    }
+
+    // Double-check the total cash sunk into modifications dynamically for the FE summary cards
+    const calculatedSunkCost = ((projectWithTimeline as any).modLogs || []).reduce(
+      (sum: number, log: any) => sum + Number(log.cost || 0),
+      0,
+    );
+
+    return {
+      ...projectWithTimeline,
+      calculatedSunkCost,
+    };
+  }
+
   async createPartListing(body: any) {
     const { name, price } = body;
     if (!name || !price) throw new BadRequestException('Name and price are required');
@@ -123,7 +155,6 @@ export class ProjectsService {
       this.prisma.user.findUnique({ where: { id: Number(userId) } }),
     ]);
 
-    // 🛠️ Modified condition check to avoid strict account matching during local development
     if (!project) throw new NotFoundException('Project build profile not found');
     if (process.env.NODE_ENV === 'production' && Number(project.userId) !== Number(userId)) {
       throw new NotFoundException('Project build profile not found');
