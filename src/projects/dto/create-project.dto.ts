@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsIn } from 'class-validator';
 
 export class CreateProjectDto {
   @ApiProperty({ example: 'Chevy Camaro SS 2017' })
@@ -16,4 +16,16 @@ export class CreateProjectDto {
   @IsOptional()
   @IsString()
   imageUrl?: string;
+
+  @ApiProperty({ 
+    example: 'WIP', 
+    description: 'Current development/build status stage of the vehicle asset', 
+    enum: ['Planning', 'WIP', 'Complete'],
+    required: false,
+    default: 'WIP'
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['Planning', 'WIP', 'Complete'], { message: 'Status must be Planning, WIP, or Complete' })
+  status?: string;
 }
